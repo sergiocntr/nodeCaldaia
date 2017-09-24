@@ -1,0 +1,40 @@
+- platform: yr
+- platform: darksky
+  api_key: d89602d64863782aae1bb7b9180bc3d5
+  monitored_conditions:
+    - summary
+    - precip_intensity
+    - precip_type
+#SENSORI METEO
+- platform: mqtt
+  state_topic: "/casa/esterno/terrazza_leo/sensori"
+  name: 'Ext. Temperature'
+  unit_of_measurement: '°C'
+  value_template: '{{ value_json.Temp | round(1)}}'
+- platform: mqtt
+  state_topic: "/casa/esterno/terrazza_leo/sensori"
+  name: 'Ext. Humidity'
+  unit_of_measurement: '%'
+  value_template: '{{ value_json.Hum | round(1)}}'
+- platform: mqtt
+  state_topic: "/casa/esterno/terrazza_leo/sensori"
+  name: 'Pressure'
+  unit_of_measurement: 'hPa'
+  value_template: '{{ value_json.Press | round(1)}}'
+#SENSORI IN CASA
+- platform: mqtt
+  state_topic: "/casa/interno/camera_noi/sensori"
+  name: 'Int. Temperature'
+  unit_of_measurement: '°C'
+  value_template: '{{ value_json.TempCasa | round(1)}}'
+- platform: mqtt
+  state_topic: "/casa/interno/camera_noi/sensori"
+  name: 'Int. Humidity'
+  unit_of_measurement: '%'
+  value_template: '{{ value_json.HumCasa | round(1)}}'
+#SENSORI CALDAIA
+- platform: mqtt
+  state_topic: "/casa/esterno/caldaia/tempH20"
+  name: 'T H20 Caldaia'
+  unit_of_measurement: '°C'
+  value_template: '{{ value_json.tempH20 | round(1)}}'

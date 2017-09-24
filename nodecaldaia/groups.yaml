@@ -1,0 +1,31 @@
+meteo:
+  name: Meteo
+  view: yes
+  entities:
+    - sensor.ext_temperature
+    - sensor.ext_humidity
+    - sensor.pressure
+    - sensor.dark_sky_summary
+media:
+  entities:
+    - media_player.kodi
+weather:
+  name: weather
+  entities:
+    - sensor.dark_sky_summary
+    - sensor.dark_sky_precip_type
+    - sensor.dark_sky_precip_intensity
+    - sensor.ext_temperature
+    - sensor.ext_humidity
+    - sensor.pressure
+casa:
+  name: casa
+  entities:
+    - sensor.int_temperature
+    - sensor.int_humidity
+clima:
+  name: clima
+  entities:
+    - switch.riscaldamento
+    - switch.acqua_calda
+    - sensor.t_h20_caldaia

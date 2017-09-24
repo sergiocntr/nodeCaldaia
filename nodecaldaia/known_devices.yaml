@@ -1,0 +1,26 @@
+sergio_leocell:
+  hide_if_away: false
+  icon:
+  mac:
+  name: Leo
+  picture:
+  track: true
+  vendor:
+
+sergio_sergiocell:
+  hide_if_away: false
+  icon:
+  mac:
+  name: sergio
+  picture:
+  track: true
+  vendor:
+
+sergio_donycell:
+  hide_if_away: false
+  icon:
+  mac:
+  name: Dony
+  picture:
+  track: true
+  vendor:
