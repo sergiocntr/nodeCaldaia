@@ -29,6 +29,7 @@
 #include <DallasTemperature.h>
 #include <nodeRelay.h>
 #include <pin.h>
+
 //ONE WIRE stuff
 const int ONE_WIRE_BUS = D1;
 OneWire oneWire(ONE_WIRE_BUS);
@@ -39,14 +40,11 @@ WiFiClient espClient;
 //MQTT stuff
 PubSubClient client(espClient);
 //relecaldaia
-nodeRelay riscaldamento(D4); //usato x normale riscaldamento
+nodeRelay riscaldamento(caldaiaPin); //usato x normale riscaldamento
 nodeRelay acquacalda(acquaPin); //usato per preriscaldo acqua calda
 //nodeRelay allarmeCaldaia(resetPin); //usato per resettare l allarme caldaia
 
 int readingIn = 0;
-//Necesary to make Arduino Software autodetect OTA device
-
-
 char temperatureString[6];
 float getTemperature() {
   float temp;
@@ -62,9 +60,9 @@ void setup_wifi() {
 
   smartDelay(10);
   // We start by connecting to a WiFi network
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
+  //Serial.println();
+  //Serial.print("Connecting to ");
+  //Serial.println(ssid);
 
   WiFi.begin(ssid, password);
   WiFi.config(ip, gateway, subnet); // Set static IP (2,7s) or 8.6s with DHCP  + 2s on battery
@@ -73,17 +71,11 @@ void setup_wifi() {
     //extButton();
     //for(int i = 0; i<500; i++){
     //  extButton();
-      delay(500);
+      delay(10000);
     //}
     Serial.print(".");
   }
-  //digitalWrite(13, LOW);
-  //delay(500);
-  //digitalWrite(13, HIGH);
-  //delay(500);
-  //digitalWrite(13, LOW);
-  //delay(500);
-  //digitalWrite(13, HIGH);
+
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
@@ -91,27 +83,27 @@ void setup_wifi() {
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
+  //Serial.print("Message arrived [");
+  //Serial.print(topic);
+  //Serial.print("] ");
   //se arriva il topic relay passo il primo carattere alla sub
   //che sara' 0 o 1 attivare o non attivare caldaia
   if (strcmp(topic, riscaldaTopic) == 0) {
     riscaldamento.relay((char)payload[0]);
-    Serial.println("riscaldatopicAttivato");
+    //Serial.println("riscaldatopicAttivato");
     //delay(10);
   }
   //se arriva il topic acquacalda faccio bypassare il micro del flussostato
   //che sara' 0 o 1 attivare o non attivare caldaia
   if (strcmp(topic, acquaTopic) == 0) {
-    //acquacalda.relay((char)payload[0]);
-    delay(10);
+    acquacalda.relay((char)payload[0]);
+    smartDelay(10);
   }
   //TOPIC Reset Manuale Caldaia se allarme
   if (strcmp(topic, resetTopic) == 0) {
     if((char)payload[0] == '1'){
       //allarmeCaldaia.relay('1');
-      smartDelay(2000);
+      smartDelay(10);
       //allarmeCaldaia.relay('0');
     }
   }
@@ -127,19 +119,12 @@ void reconnect() {
       Serial.println("connected");
       // Once connected, publish an announcement...
       client.publish(logTopic, "NodeMCU Caldaia connesso");
-      // ... and resubscribe
-      /*if (client.subscribe(riscaldaTopic) == true) {
-          Serial.println("Success subscribe riscaldatopci");
-          client.publish(logTopic, "Success subscribe riscaldatopci");
-      } else {
-          Serial.println("Error subscribe riscaldatopci");
-      }*/
       client.subscribe(riscaldaTopic);
       client.loop();
       client.subscribe(acquaTopic);
       client.loop();
       //client.subscribe(alarmTopic);
-      client.loop();
+      //client.loop();
       //client.subscribe(resetTopic);
     } else {
       Serial.print("failed, rc=");
@@ -159,6 +144,9 @@ void setup() {
   //delay(500);
   //digitalWrite(13, HIGH);
   //delay(500);
+
+  acquacalda.relay('0');
+  riscaldamento.relay('0');
   Serial.begin(115200);
   setup_wifi();                   // Connect to wifi
   setupOTA();
@@ -167,34 +155,52 @@ void setup() {
   DS18B20.begin();
   //se il piedino di allarme scende a zero (spia accesa)
   //resetta la caldaia
-  //attachInterrupt(digitalPinToInterrupt(alarmPin), alarmInterrupt, FALLING);
+  pinMode(acquaIntPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(acquaIntPin), acquaInterrupt, CHANGE);
   //attachInterrupt(digitalPinToInterrupt(alarmPin), alarmInterrupt, FALLING);
 
 }
-void sendTemp(float temp) {
+void acquaInterrupt(){
+  float temp = getTemperature();
+  client.publish(logTopic, "Interrupt");
+}
+void sendThing(valori dati,const char* topic,char* argomento) {
   StaticJsonBuffer<300> JSONbuffer;
   JsonObject& JSONencoder = JSONbuffer.createObject();
-  JSONencoder["tempH20"] = temp;
+  if (strcmp(topic, tempH20Topic) == 0) {
+    JSONencoder[argomento] = dati.acquaTemp;
+    dtostrf(dati.acquaTemp, 2, 2, temperatureString);
+    client.publish(topic, temperatureString); //prova prova
+  }
+
+  if (strcmp(topic, powerTopic) == 0) {
+    JSONencoder[argomento] = dati.power;
+  }
+
   char JSONmessageBuffer[50];
   JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
-  Serial.println(JSONmessageBuffer);
-  if (client.publish(tempH20Topic, JSONmessageBuffer) == true) {
+  client.publish(topic, JSONmessageBuffer);
+  //Serial.println(JSONmessageBuffer);
+  /*if (client.publish(topic, JSONmessageBuffer) == true) {
       Serial.println("Success sending message");
   } else {
       Serial.println("Error sending message");
-  }
+  }*/
   //client.publish(logTopic, "Allarme Blocco ,resettato!");
 }
 void loop() {
-  ArduinoOTA.handle();
+
   reconnect();
-  float temperature = getTemperature();
-  sendTemp(temperature);
-  dtostrf(temperature, 2, 2, temperatureString);
-  Serial.println(temperatureString);
+  valori val;
+  val.acquaTemp = getTemperature();
+  sendThing(val,tempH20Topic,"tempH20");
+  //sendTemp(val);
+  //dtostrf(val.acquaTemp, 2, 2, temperatureString);
+  //Serial.println(temperatureString);
   for (int i = 0; i < 10; i++) {
-    readingIn = analogRead(A0);
-    Serial.println(readingIn);
+    val.power = analogRead(valvePin);
+    //Serial.println(readingIn);
+    sendThing(val,powerTopic,"power");
     smartDelay(1000);
   }
 }
@@ -202,7 +208,7 @@ void smartDelay(unsigned long ms){
   unsigned long start = millis();
   do
   {
+    ArduinoOTA.handle();
     client.loop();
-
   } while (millis() - start < ms);
 }

@@ -22,20 +22,20 @@ nodeRelay::nodeRelay(int relayPin,int buttonPin) {
 
   pinMode(relayPin, OUTPUT);     // Initialize the relay pin as an output
   pinMode(buttonPin, INPUT_PULLUP);     // Initialize the relay pin as an INPUT_PULLUP
-  digitalWrite(relayPin,LOW);
+  digitalWrite(relayPin,HIGH);
   //debouncer.attach(buttonPin);   // Use the bounce2 library to debounce the built in button
   //debouncer.interval(50);         // Input must be low for 50 ms
   _relayPin = relayPin;
   _buttonPin = buttonPin;
 }
-void nodeRelay::relay(char mychar){
-if (mychar == '0') {
+void nodeRelay::relay(char mychar){ //funziona al contrario mettendo a zero il positivo
+if (mychar == '1') {
   digitalWrite(_relayPin, LOW);   // Turn the LED on (Note that LOW is the voltage level
   Serial.println("relayPin -> LOW");
   _relayState = LOW;
   //EEPROM.write(0, relayState);    // Write state to EEPROM
   //EEPROM.commit();
-} else if (mychar == '1') {
+} else if (mychar == '0') {
   digitalWrite(_relayPin, HIGH);  // Turn the LED off by making the voltage HIGH
   Serial.println("relayPin -> HIGH");
   _relayState = HIGH;

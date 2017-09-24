@@ -11,5 +11,6 @@ const char* resetTopic ="/casa/esterno/caldaia/reset"; //0 o 1 per premere pulsa
 //const char* scaldaAvailableTopic ="/casa/esterno/caldaia/scalda"; // ON o OFF sensore attivita' caldaia
 const char* alarmTopic ="/casa/esterno/caldaia/alarm";   //ON OFF alarme blocco attivo
 const char* tempH20Topic ="/casa/esterno/caldaia/tempH20"; // temp H20 caldaia
+const char* powerTopic ="/casa/esterno/caldaia/power"; // temp H20 caldaia
 const char* logTopic ="/casa/esterno/caldaia/log"; // temp H20 caldaia
 #endif
