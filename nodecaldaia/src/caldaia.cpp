@@ -168,8 +168,9 @@ void sendThing(valori dati,const char* topic,char* argomento) {
   StaticJsonBuffer<300> JSONbuffer;
   JsonObject& JSONencoder = JSONbuffer.createObject();
   if (strcmp(topic, tempH20Topic) == 0) {
-    JSONencoder[argomento] = dati.acquaTemp;
     dtostrf(dati.acquaTemp, 2, 2, temperatureString);
+    JSONencoder[argomento] = temperatureString;
+
     client.publish(topic, temperatureString); //prova prova
   }
 
@@ -200,7 +201,7 @@ void loop() {
   for (int i = 0; i < 10; i++) {
     val.power = analogRead(valvePin);
     //Serial.println(readingIn);
-    sendThing(val,powerTopic,"power");
+    if(val.power > 3)  sendThing(val,powerTopic,"power");
     smartDelay(1000);
   }
 }
