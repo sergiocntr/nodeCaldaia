@@ -43,7 +43,7 @@ PubSubClient client(espClient);
 nodeRelay riscaldamento(caldaiaPin); //usato x normale riscaldamento
 nodeRelay acquacalda(acquaPin); //usato per preriscaldo acqua calda
 //nodeRelay allarmeCaldaia(resetPin); //usato per resettare l allarme caldaia
-
+valori val;
 int readingIn = 0;
 char temperatureString[6];
 float getTemperature() {
@@ -190,18 +190,24 @@ void sendThing(valori dati,const char* topic,char* argomento) {
   //client.publish(logTopic, "Allarme Blocco ,resettato!");
 }
 void loop() {
-
   reconnect();
-  valori val;
   val.acquaTemp = getTemperature();
   sendThing(val,tempH20Topic,"tempH20");
-  //sendTemp(val);
-  //dtostrf(val.acquaTemp, 2, 2, temperatureString);
-  //Serial.println(temperatureString);
+  bool sendValue =false;
   for (int i = 0; i < 10; i++) {
     val.power = analogRead(valvePin);
-    //Serial.println(readingIn);
-    if(val.power > 3)  sendThing(val,powerTopic,"power");
+
+    if(val.power > 3 )  {
+      sendThing(val,powerTopic,"power");
+      sendValue=true;
+    }else {
+      if(sendValue)
+      {
+        sendValue = false;
+        sendThing(val,powerTopic,"power");
+      }
+    }
+
     smartDelay(1000);
   }
 }
