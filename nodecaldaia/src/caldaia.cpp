@@ -22,6 +22,7 @@
 #include <caldaia.h>
 #include <config.h>
 #include <topic.h>
+//#include <time.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
@@ -63,7 +64,7 @@ void setup_wifi() {
   //Serial.println();
   //Serial.print("Connecting to ");
   //Serial.println(ssid);
-
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   WiFi.config(ip, gateway, subnet); // Set static IP (2,7s) or 8.6s with DHCP  + 2s on battery
 
@@ -109,7 +110,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 
 }
-
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
@@ -137,28 +137,6 @@ void reconnect() {
       //}
     }
   }
-}
-void setup() {
-  //pinMode(13, OUTPUT);
-  //digitalWrite(13, LOW);          // Blink to indicate setup
-  //delay(500);
-  //digitalWrite(13, HIGH);
-  //delay(500);
-
-  acquacalda.relay('0');
-  riscaldamento.relay('0');
-  Serial.begin(115200);
-  setup_wifi();                   // Connect to wifi
-  setupOTA();
-  client.setServer(mqtt_server, mqtt_port);
-  client.setCallback(callback);
-  DS18B20.begin();
-  //se il piedino di allarme scende a zero (spia accesa)
-  //resetta la caldaia
-  pinMode(acquaIntPin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(acquaIntPin), acquaInterrupt, CHANGE);
-  //attachInterrupt(digitalPinToInterrupt(alarmPin), alarmInterrupt, FALLING);
-
 }
 void acquaInterrupt(){
   float temp = getTemperature();
@@ -188,6 +166,22 @@ void sendThing(valori dati,const char* topic,char* argomento) {
       Serial.println("Error sending message");
   }*/
   //client.publish(logTopic, "Allarme Blocco ,resettato!");
+}
+void setup() {
+  acquacalda.relay('0');
+  riscaldamento.relay('0');
+  Serial.begin(115200);
+  setup_wifi();                   // Connect to wifi
+  setupOTA();
+  client.setServer(mqtt_server, mqtt_port);
+  client.setCallback(callback);
+  DS18B20.begin();
+  //se il piedino di allarme scende a zero (spia accesa)
+  //resetta la caldaia
+  pinMode(acquaIntPin, INPUT_PULLUP);
+  //attachInterrupt(digitalPinToInterrupt(acquaIntPin), acquaInterrupt, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(alarmPin), alarmInterrupt, FALLING);
+  //configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
 }
 void loop() {
   reconnect();

@@ -13,5 +13,8 @@ const char* mqtt_server = "192.168.1.100";
 const uint16_t mqtt_port = 8883;
 const char* mqttUser ="sergio";
 const char* mqttPass ="donatella";
+//TIME
+//int timezone = 3;
+//int dst = 0;
 
 #endif
