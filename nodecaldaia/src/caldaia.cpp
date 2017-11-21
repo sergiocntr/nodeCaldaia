@@ -186,6 +186,11 @@ void setup() {
 void loop() {
   reconnect();
   val.acquaTemp = getTemperature();
+  if(val.acquaTemp <4.0){
+    riscaldamento.relay('0');
+    smartDelay(5000);
+    riscaldamento.relay('1');
+  }
   sendThing(val,tempH20Topic,"tempH20");
   bool sendValue =false;
   for (int i = 0; i < 10; i++) {
