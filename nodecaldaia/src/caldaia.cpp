@@ -1,22 +1,3 @@
-/*
-
- It connects to an MQTT server then:
-  - on 0 switches off relay
-  - on 1 switches on relay
-  - on 2 switches the state of the relay
-
-  - sends 0 on off relay
-  - sends 1 on on relay
-
- It will reconnect to the server if the connection is lost using a blocking
- reconnect function. See the 'mqtt_reconnect_nonblocking' example for how to
- achieve the same result without blocking the main loop.
-
- The current state is stored in EEPROM and restored on bootup
-
- //su questo file ci deve stare solo la connessione
-
-*/
 #include <math.h>
 #include <ota.h>
 #include <caldaia.h>
@@ -58,35 +39,13 @@ float getTemperature() {
   return temp;
 }
 void setup_wifi() {
-
+  //qui solo inizializzazione del wifi
   smartDelay(10);
-  // We start by connecting to a WiFi network
-  //Serial.println();
-  //Serial.print("Connecting to ");
-  //Serial.println(ssid);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   WiFi.config(ip, gateway, subnet); // Set static IP (2,7s) or 8.6s with DHCP  + 2s on battery
-
-  while (WiFi.status() != WL_CONNECTED) {
-    //extButton();
-    //for(int i = 0; i<500; i++){
-    //  extButton();
-      delay(10000);
-    //}
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
 }
-
 void callback(char* topic, byte* payload, unsigned int length) {
-  //Serial.print("Message arrived [");
-  //Serial.print(topic);
-  //Serial.print("] ");
   //se arriva il topic relay passo il primo carattere alla sub
   //che sara' 0 o 1 attivare o non attivare caldaia
   if (strcmp(topic, riscaldaTopic) == 0) {
@@ -111,32 +70,28 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 }
 void reconnect() {
-  // Loop until we're reconnected
-  while (!client.connected()) {
+  //bool conn = False;
+  for (char i = 0; i < 10; i++) {
     Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    if (client.connect("NodeCaldaia",mqttUser,mqttPass)) {
+    if (client.connect("NodeCaldaia",mqttUser,mqttPass))
+    {
       Serial.println("connected");
-      // Once connected, publish an announcement...
+      //conn = True;
       client.publish(logTopic, "NodeMCU Caldaia connesso");
       client.subscribe(riscaldaTopic);
       client.loop();
       client.subscribe(acquaTopic);
       client.loop();
-      //client.subscribe(alarmTopic);
-      //client.loop();
-      //client.subscribe(resetTopic);
-    } else {
+    }
+    else
+    {
       Serial.print("failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      //for(int i = 0; i<5000; i++){
-      //  extButton();
-        smartDelay(2000);
-      //}
+      smartDelay(5000);
     }
   }
+  //if(!conn) loop();
 }
 void acquaInterrupt(){
   float temp = getTemperature();
@@ -183,14 +138,42 @@ void setup() {
   //attachInterrupt(digitalPinToInterrupt(alarmPin), alarmInterrupt, FALLING);
   //configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
 }
+void scaldaacqua(){
+//val.acquaTemp = getTemperature();
+Serial.println(val.acquaTemp);
+  smartDelay(100);
+  char mychar ;
+    if(val.acquaTemp < 3.0){
+      delay(10);
+      riscaldamento.relay('1');
+      Serial.println("mona");
+      delay(15000);
+      riscaldamento.relay('0');
+  delay(10);
+}
+}
 void loop() {
-  reconnect();
   val.acquaTemp = getTemperature();
-  if(val.acquaTemp <4.0){
-    riscaldamento.relay('0');
-    smartDelay(5000);
-    riscaldamento.relay('1');
-  }
+  for (char i = 0; i < 10; i++) if (WiFi.status() != WL_CONNECTED) delay(1000);
+  //se scollegato ... dormi
+  if (WiFi.status() != WL_CONNECTED){
+      WiFi.disconnect();
+      WiFi.mode( WIFI_OFF );
+      WiFi.forceSleepBegin();
+      delay( 1 );
+      for (char z = 0; z < 60; z++) {
+        scaldaacqua();
+        smartDelay(5000);
+      }
+      WiFi.forceSleepWake();
+      delay(1);
+      //riparti d'accapo
+      setup();
+    }
+  scaldaacqua();
+  smartDelay(100);
+  reconnect();
+  smartDelay(100);
   sendThing(val,tempH20Topic,"tempH20");
   bool sendValue =false;
   for (int i = 0; i < 10; i++) {
