@@ -25,7 +25,7 @@ PubSubClient client(espClient);
 nodeRelay riscaldamento(caldaiaPin); //usato x normale riscaldamento
 nodeRelay acquacalda(acquaPin); //usato per preriscaldo acqua calda
 //nodeRelay allarmeCaldaia(resetPin); //usato per resettare l allarme caldaia
-valori val;
+//valori val;
 int readingIn = 0;
 char temperatureString[6];
 float getTemperature() {
@@ -97,30 +97,17 @@ void acquaInterrupt(){
   float temp = getTemperature();
   client.publish(logTopic, "Interrupt");
 }
-void sendThing(valori dati,const char* topic,char* argomento) {
+void sendThing(datiCaldaia dati,const char* topic,char* argomento) {
   StaticJsonBuffer<300> JSONbuffer;
   JsonObject& JSONencoder = JSONbuffer.createObject();
-  if (strcmp(topic, tempH20Topic) == 0) {
-    dtostrf(dati.acquaTemp, 2, 2, temperatureString);
-    JSONencoder[argomento] = temperatureString;
-
-    client.publish(topic, temperatureString); //prova prova
-  }
-
-  if (strcmp(topic, powerTopic) == 0) {
-    JSONencoder[argomento] = dati.power;
-  }
-
-  char JSONmessageBuffer[50];
+  dtostrf(dati.acquaTemp, 2, 2, temperatureString);
+  JSONencoder["topic"] = argomento;
+  JSONencoder["acqua"] = dati.acquaTemp;
+  JSONencoder["power"] = dati.power;
+  char JSONmessageBuffer[100];
   JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
   client.publish(topic, JSONmessageBuffer);
-  //Serial.println(JSONmessageBuffer);
-  /*if (client.publish(topic, JSONmessageBuffer) == true) {
-      Serial.println("Success sending message");
-  } else {
-      Serial.println("Error sending message");
-  }*/
-  //client.publish(logTopic, "Allarme Blocco ,resettato!");
+
 }
 void setup() {
   acquacalda.relay('0');
@@ -140,10 +127,10 @@ void setup() {
 }
 void scaldaacqua(){
 //val.acquaTemp = getTemperature();
-Serial.println(val.acquaTemp);
+Serial.println(valori.acquaTemp);
   smartDelay(100);
   char mychar ;
-    if(val.acquaTemp < 3.0){
+    if(valori.acquaTemp < 3.0){
       delay(10);
       riscaldamento.relay('1');
       Serial.println("mona");
@@ -153,7 +140,7 @@ Serial.println(val.acquaTemp);
 }
 }
 void loop() {
-  val.acquaTemp = getTemperature();
+
   for (char i = 0; i < 10; i++) if (WiFi.status() != WL_CONNECTED) delay(1000);
   //se scollegato ... dormi
   if (WiFi.status() != WL_CONNECTED){
@@ -174,25 +161,16 @@ void loop() {
   smartDelay(100);
   reconnect();
   smartDelay(100);
-  sendThing(val,tempH20Topic,"tempH20");
-  bool sendValue =false;
-  for (int i = 0; i < 10; i++) {
-    val.power = analogRead(valvePin);
-
-    if(val.power > 3 )  {
-      sendThing(val,powerTopic,"power");
-      sendValue=true;
-    }else {
-      if(sendValue)
-      {
-        sendValue = false;
-        sendThing(val,powerTopic,"power");
-      }
-    }
-
-    smartDelay(1000);
+  valori.power=0;
+  for (char z = 0; z < 120; z++) {
+    valori.power += analogRead(valvePin);
+    smartDelay(500);
   }
-}
+  valori.acquaTemp = getTemperature();
+  sendThing(valori,extSensTopic,"Caldaia");
+  smartDelay(1000);
+  }
+
 void smartDelay(unsigned long ms){
   unsigned long start = millis();
   do
