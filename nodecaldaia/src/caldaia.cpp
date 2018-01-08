@@ -1,33 +1,4 @@
-#include <math.h>
-#include <ota.h>
 #include <caldaia.h>
-#include <config.h>
-#include <topic.h>
-//#include <time.h>
-#include <ESP8266WiFi.h>
-#include <PubSubClient.h>
-#include <ArduinoJson.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
-#include <nodeRelay.h>
-#include <pin.h>
-
-//ONE WIRE stuff
-const int ONE_WIRE_BUS = D1;
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature DS18B20(&oneWire);
-//WIFI Stuff
-
-WiFiClient espClient;
-//MQTT stuff
-PubSubClient client(espClient);
-//relecaldaia
-nodeRelay riscaldamento(caldaiaPin); //usato x normale riscaldamento
-nodeRelay acquacalda(acquaPin); //usato per preriscaldo acqua calda
-//nodeRelay allarmeCaldaia(resetPin); //usato per resettare l allarme caldaia
-//valori val;
-int readingIn = 0;
-char temperatureString[6];
 float getTemperature() {
   float temp;
   do {
@@ -73,7 +44,8 @@ void reconnect() {
   //bool conn = False;
   for (char i = 0; i < 10; i++) {
     Serial.print("Attempting MQTT connection...");
-    if (client.connect("NodeCaldaia",mqttUser,mqttPass))
+    //(clientID, username, password, willTopic, willQoS, willRetain, willMessage)
+    if (client.connect(nodeID,mqttUser,mqttPass))
     {
       Serial.println("connected");
       //conn = True;
@@ -106,7 +78,7 @@ void sendThing(datiCaldaia dati,const char* topic,char* argomento) {
   JSONencoder["power"] = dati.power;
   char JSONmessageBuffer[100];
   JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
-  client.publish(topic, JSONmessageBuffer);
+  client.publish(topic, JSONmessageBuffer,TRUE);
 
 }
 void setup() {
@@ -118,26 +90,19 @@ void setup() {
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
   DS18B20.begin();
-  //se il piedino di allarme scende a zero (spia accesa)
-  //resetta la caldaia
   pinMode(acquaIntPin, INPUT_PULLUP);
-  //attachInterrupt(digitalPinToInterrupt(acquaIntPin), acquaInterrupt, CHANGE);
-  //attachInterrupt(digitalPinToInterrupt(alarmPin), alarmInterrupt, FALLING);
-  //configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
 }
 void scaldaacqua(){
-//val.acquaTemp = getTemperature();
-Serial.println(valori.acquaTemp);
-  smartDelay(100);
-  char mychar ;
-    if(valori.acquaTemp < 3.0){
-      delay(10);
-      riscaldamento.relay('1');
-      Serial.println("mona");
-      delay(15000);
-      riscaldamento.relay('0');
-  delay(10);
-}
+  //smartDelay(100);
+  if(valori.acquaTemp < 3.0){
+    smartDelay(10);
+    riscaldamento.relay('1');
+    while (getTemperature() < 10) {
+      smartDelay(500);
+    }
+    riscaldamento.relay('0');
+    smartDelay(10);
+  }
 }
 void loop() {
 
@@ -160,7 +125,6 @@ void loop() {
   scaldaacqua();
   smartDelay(100);
   reconnect();
-  smartDelay(100);
   valori.power=0;
   for (char z = 0; z < 120; z++) {
     valori.power += analogRead(valvePin);
@@ -168,9 +132,22 @@ void loop() {
   }
   valori.acquaTemp = getTemperature();
   sendThing(valori,extSensTopic,"Caldaia");
-  smartDelay(1000);
-  }
+  sendMySql(valori);
+}
+void sendMySql(datiCaldaia dati){
+  if (espClient.connect(host, httpPort))
+  {
+    Serial.println("connected");
+    // Make a HTTP request:
+    String s =String("GET /meteofeletto/caldaia_logger.php?gaspower=" + String(dati.power) +
+    +"&&pwd=" + webpass +
+    +"&&temp=" + String(dati.acquaTemp) +
+    + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
+    //Serial.println(s);
+    espClient.println(s);
 
+  }
+}
 void smartDelay(unsigned long ms){
   unsigned long start = millis();
   do

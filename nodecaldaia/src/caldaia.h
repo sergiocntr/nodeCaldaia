@@ -1,15 +1,15 @@
 #ifndef caldaia_h
 #define caldaia_h
 #include <Arduino.h>
-#include <config.h>
+#include <cconfig.h>
 #include <topic.h>
-#include <pins_arduino.h>
+#include <pin.h>
+#include <ota.h>
 #include <nodeRelay.h>
-//#include <time.h>
-//#include <string>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <DallasTemperature.h>
 struct CaldaiaData{
   float acquaTemp;
   int power;
@@ -20,6 +20,22 @@ datiCaldaia valori;
 //  float acquaTemp;
 //  int power;
 //};
+//ONE WIRE stuff
+const int ONE_WIRE_BUS = D1;
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature DS18B20(&oneWire);
+//WIFI Stuff
+
+WiFiClient espClient;
+//MQTT stuff
+PubSubClient client(espClient);
+//relecaldaia
+nodeRelay riscaldamento(caldaiaPin); //usato x normale riscaldamento
+nodeRelay acquacalda(acquaPin); //usato per preriscaldo acqua calda
+//nodeRelay allarmeCaldaia(resetPin); //usato per resettare l allarme caldaia
+//valori val;
+int readingIn = 0;
+char temperatureString[6];
 void smartDelay(unsigned long ms);
 void alarmInterrupt();
 void reconnect();
@@ -29,5 +45,6 @@ float getTemperature();
 void acquaInterrupt();
 void callback(char* topic, byte* payload, unsigned int length);
 void sendThing(datiCaldaia dati,const char* topic,char* argomento);
+void sendMySql(datiCaldaia dati);
 void myOTAUpdate();
 #endif
