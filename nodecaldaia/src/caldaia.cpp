@@ -21,13 +21,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
   //che sara' 0 o 1 attivare o non attivare caldaia
   if (strcmp(topic, riscaldaTopic) == 0) {
     riscaldamento.relay((char)payload[0]);
-    //Serial.println("riscaldatopicAttivato");
+    Serial.println("riscaldatopicAttivato");
     //delay(10);
   }
   //se arriva il topic acquacalda faccio bypassare il micro del flussostato
   //che sara' 0 o 1 attivare o non attivare caldaia
   if (strcmp(topic, acquaTopic) == 0) {
     acquacalda.relay((char)payload[0]);
+    Serial.println("acquaTopic");
     smartDelay(10);
   }
   //TOPIC Reset Manuale Caldaia se allarme
@@ -38,32 +39,35 @@ void callback(char* topic, byte* payload, unsigned int length) {
       //allarmeCaldaia.relay('0');
     }
   }
-
 }
 void reconnect() {
-  //bool conn = False;
-  for (char i = 0; i < 10; i++) {
-    Serial.print("Attempting MQTT connection...");
-    //(clientID, username, password, willTopic, willQoS, willRetain, willMessage)
-    if (client.connect(nodeID,mqttUser,mqttPass))
+  if ((WiFi.status() == WL_CONNECTED) && (!client.connected()))
+  {
+    for (char i = 0; i < 10; i++)
     {
-      Serial.println("connected");
-      //conn = True;
-      client.publish(logTopic, "NodeMCU Caldaia connesso");
-      client.subscribe(riscaldaTopic);
-      client.loop();
-      client.subscribe(acquaTopic);
-      client.loop();
-    }
-    else
-    {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      smartDelay(5000);
+      Serial.print("Attempting MQTT connection...");
+      //(clientID, username, password, willTopic, willQoS, willRetain, willMessage)
+      if (client.connect(nodeID,mqttUser,mqttPass))
+      {
+        Serial.println("connected");
+        //conn = True;
+        client.publish(logTopic, "NodeMCU Caldaia connesso");
+        client.subscribe(riscaldaTopic);
+        client.loop();
+        client.subscribe(acquaTopic);
+        client.loop();
+        digitalWrite(enableDisplay,HIGH);
+        break;
+      }
+      else
+      {
+        Serial.print("failed, rc=");
+        Serial.print(client.state());
+        Serial.println(" try again in 5 seconds");
+        smartDelay(5000);
+      }
     }
   }
-  //if(!conn) loop();
 }
 void acquaInterrupt(){
   float temp = getTemperature();
@@ -84,16 +88,19 @@ void sendThing(datiCaldaia dati,const char* topic,char* argomento) {
 void setup() {
   acquacalda.relay('0');
   riscaldamento.relay('0');
+  pinMode(acquaIntPin, INPUT_PULLUP);
+  pinMode(enableDisplay,OUTPUT);
+  digitalWrite(enableDisplay,LOW);
   Serial.begin(115200);
   setup_wifi();                   // Connect to wifi
   setupOTA();
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
   DS18B20.begin();
-  pinMode(acquaIntPin, INPUT_PULLUP);
+
 }
 void scaldaacqua(){
-  //smartDelay(100);
+  valori.acquaTemp = getTemperature();
   if(valori.acquaTemp < 3.0){
     smartDelay(10);
     riscaldamento.relay('1');
@@ -105,23 +112,27 @@ void scaldaacqua(){
   }
 }
 void loop() {
-
+  smartDelay(100);
   for (char i = 0; i < 10; i++) if (WiFi.status() != WL_CONNECTED) delay(1000);
   //se scollegato ... dormi
-  if (WiFi.status() != WL_CONNECTED){
-      WiFi.disconnect();
-      WiFi.mode( WIFI_OFF );
-      WiFi.forceSleepBegin();
-      delay( 1 );
-      for (char z = 0; z < 60; z++) {
-        scaldaacqua();
-        smartDelay(5000);
-      }
-      WiFi.forceSleepWake();
-      delay(1);
-      //riparti d'accapo
-      setup();
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    digitalWrite(enableDisplay,LOW);
+    WiFi.disconnect();
+    WiFi.mode( WIFI_OFF );
+    WiFi.forceSleepBegin();
+    delay( 1 );
+    for (char z = 0; z < 60; z++)
+    {
+      scaldaacqua();
+      smartDelay(5000);
     }
+    WiFi.forceSleepWake();
+    delay(1);
+    //riparti d'accapo
+    setup();
+    }
+
   scaldaacqua();
   smartDelay(100);
   reconnect();
@@ -130,7 +141,7 @@ void loop() {
     valori.power += analogRead(valvePin);
     smartDelay(500);
   }
-  valori.acquaTemp = getTemperature();
+  //valori.acquaTemp = getTemperature();
   sendThing(valori,extSensTopic,"Caldaia");
   sendMySql(valori);
 }
