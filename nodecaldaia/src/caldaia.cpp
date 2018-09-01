@@ -132,7 +132,7 @@ void loop() {
   smartDelay(100);
   reconnect();
   valori.power=0;
-  uint8_t currpower = 0;
+  int currpower = 0;
   for (char z = 0; z < 120; z++) {
     currpower= analogRead(valvePin);
     mfPower.in(currpower);
