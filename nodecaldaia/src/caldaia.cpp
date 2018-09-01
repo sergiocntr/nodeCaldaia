@@ -6,6 +6,8 @@ float getTemperature() {
     temp = DS18B20.getTempCByIndex(0);
     smartDelay(100);
   } while (temp == 85.0 || temp == (-127.0));
+  int tempInt=temp * 100;
+
   temp = roundf(temp * 100) / 100;
   return temp;
 }
@@ -133,6 +135,8 @@ void loop() {
   uint8_t currpower = 0;
   for (char z = 0; z < 120; z++) {
     currpower= analogRead(valvePin);
+    mfPower.in(currpower);
+    currpower=mfPower.out();
     if(currpower > 50)
     {
       valori.acquaTemp = getTemperature();

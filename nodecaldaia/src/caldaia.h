@@ -10,6 +10,8 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <DallasTemperature.h>
+#include <MedianFilter.h>
+MedianFilter mfPower(31, 0);
 struct CaldaiaData{
   float acquaTemp;
   int power;
