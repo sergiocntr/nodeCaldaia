@@ -2,7 +2,7 @@
 #define pincaldaia_h
 static const uint8_t D11   = 9;
 static const uint8_t D12  = 10;
-const uint8_t caldaiaPin= D4;  //pin collegato all'ex termostato
+const uint8_t caldaiaPin= D2;  //pin collegato all'ex termostato//era D4 ma conflitto con TXD e faceva scattare rele
 const uint8_t acquaPin= D12;    //pin collegato al micro dell'acqua sanitaria
                             //questo pin viene attivato dal programma e da il consenso
                             //all acqua sanitaria.Si attiva basso perche la scheda ex sfinge
