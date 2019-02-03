@@ -42,10 +42,8 @@ void smartDelay(unsigned long ms);
 void alarmInterrupt();
 void reconnect();
 void setup_wifi();
-void myOTAUpdate();
 float getTemperature();
 void callback(char* topic, byte* payload, unsigned int length);
 void sendThing(datiCaldaia dati,const char* topic,char* argomento);
 void sendMySql(datiCaldaia dati);
-void myOTAUpdate();
 #endif

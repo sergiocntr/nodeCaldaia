@@ -21,6 +21,20 @@ void setup_wifi() {
 void callback(char* topic, byte* payload, unsigned int length) {
   //se arriva il topic riscaldamento passo il primo carattere alla sub
   //che sara' 0 o 1 attivare o non attivare caldaia
+  String message = String();
+  for (unsigned int i = 0; i < length; i++) {  //A loop to convert incomming message to a String
+    char input_char = (char)topic[i];
+    message += input_char;
+  }
+  //DEBUG_PRINT("mqtt topic received (");
+  Serial.println(message);
+  //DEBUG_PRINT(")");
+  message="";
+  for (unsigned int i = 0; i < length; i++) {  //A loop to convert incomming message to a String
+    char input_char = (char)payload[i];
+    message += input_char;
+  }
+  Serial.println(message);
   if (strcmp(topic, riscaldaTopic) == 0) {
     riscaldamento.relay((char)payload[0]);
     Serial.println("riscaldatopicAttivato");
@@ -29,11 +43,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
   //se arriva il topic acquacalda faccio bypassare il micro del flussostato
   //che sara' 0 o 1 attivare o non attivare caldaia
   if (strcmp(topic, acquaTopic) == 0) {
-    if (char(payload[0]) == '0')
+    if (char(payload[0]) == '0'){
       acquacalda.relay('0');
-    else
+      client.publish(logTopic, "acqua spenta");
+    }
+    else{
       acquacalda.relay('1');
     Serial.println("acquaTopic");
+  }
     smartDelay(10);
   }
   //TOPIC Reset Manuale Caldaia se allarme
@@ -42,6 +59,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       //allarmeCaldaia.relay('1');
       smartDelay(10);
       //allarmeCaldaia.relay('0');
+      boolean pippopippo=true;
     }
   }
 }
