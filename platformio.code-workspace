@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "nodecaldaia"
+		},
+		{
+			"path": "/home/sergio/default/platformio"
+		},
+		{
+			"path": "/home/sergio/Documents/PlatformIO/Projects/chrono2"
+		}
+	],
+	"settings": {
+		"terminal.integrated.env.linux": {
+			"PATH": "/home/sergio/.platformio/penv/bin:/home/sergio/.platformio/penv:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/home/sergio/.platformio/penv/bin",
+			"PLATFORMIO_CALLER": "vscode"
+		}
+	}
+}

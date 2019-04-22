@@ -9,6 +9,7 @@ class nodeRelay
     nodeRelay(int relayPin);
     nodeRelay(int relayPin,int buttonPin);
     void relay(char mychar);
+    void relay(uint8_t mybyte);
     bool relayState();
 
   private:

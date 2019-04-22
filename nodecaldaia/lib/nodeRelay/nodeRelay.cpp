@@ -1,21 +1,12 @@
-//#include <ESP8266WiFi.h>
-//#include <Bounce2.h>
 #include <nodeRelay.h>
 #include "Arduino.h"
-//char* myTopic = "/casa/esterno/caldaia/";
-// Instantiate a Bounce object :
-//Bounce debouncer = Bounce();
-
 int _relayPin;
 int _buttonPin;
 bool _relayState;
 nodeRelay::nodeRelay(int relayPin) {
 
   pinMode(relayPin, OUTPUT);     // Initialize the relay pin as an output
-  //pinMode(buttonPin, INPUT);     // Initialize the relay pin as an output
   digitalWrite(relayPin,LOW);
-  //debouncer.attach(buttonPin);   // Use the bounce2 library to debounce the built in button
-  //debouncer.interval(50);         // Input must be low for 50 ms
   _relayPin = relayPin;
 }
 nodeRelay::nodeRelay(int relayPin,int buttonPin) {
@@ -27,26 +18,30 @@ nodeRelay::nodeRelay(int relayPin,int buttonPin) {
   _buttonPin = buttonPin;
 }
 void nodeRelay::relay(char mychar){ //funziona al contrario mettendo a zero il positivo
-if (mychar == '1') {
+  if (mychar == '1') 
+  {
+    digitalWrite(_relayPin, LOW);   // Turn the LED on (Note that LOW is the voltage level
+    //Serial.println("relayPin -> LOW");
+    _relayState = 0;
+  } else if (mychar == '0') 
+  {
+    digitalWrite(_relayPin, HIGH);  // Turn the LED off by making the voltage HIGH
+    //Serial.println("relayPin -> HIGH");
+    _relayState = 1;
+  }
+}
+void nodeRelay::relay(uint8_t mybyte){ //funziona al contrario mettendo a zero il positivo
+if (mybyte == 49) {
   digitalWrite(_relayPin, LOW);   // Turn the LED on (Note that LOW is the voltage level
-  Serial.println("relayPin -> LOW");
+  //Serial.println("relayPinUint -> LOW");
   _relayState = 0;
   //EEPROM.write(0, relayState);    // Write state to EEPROM
   //EEPROM.commit();
-} else if (mychar == '0') {
+} else if (mybyte == 48) { // cioe' 0
   digitalWrite(_relayPin, HIGH);  // Turn the LED off by making the voltage HIGH
-  Serial.println("relayPin -> HIGH");
+  //Serial.println("relayPinUint -> HIGH");
   _relayState = 1;
-  //EEPROM.write(0, relayState);    // Write state to EEPROM
-  //EEPROM.commit();
-}/* else if (mychar == '2') {
-  relayState = !relayState;
-  digitalWrite(_relayPin, relayState);  // Turn the LED off by making the voltage HIGH
-  Serial.print("relayPin -> switched to ");
-  Serial.println(relayState);
-  //EEPROM.write(0, relayState);    // Write state to EEPROM
-  //EEPROM.commit();
-}*/
+  }
 }
 bool nodeRelay::relayState(){
   return _relayState;
