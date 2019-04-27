@@ -2,14 +2,20 @@
 #include <caldaia.h>
 float getTemperature() {
   float temp=22.22;
-  #ifndef DEBUGMIO
-    do {
-      DS18B20.requestTemperatures();
-      temp = DS18B20.getTempCByIndex(0);
-      smartDelay(100);
-    } while (temp == 85.0 || temp == (-127.0));
-    temp = roundf(temp * 100) / 100;
-  #endif
+  //#ifndef DEBUGMIO
+  do {
+    DS18B20.requestTemperatures();
+    temp = DS18B20.getTempCByIndex(0);
+    smartDelay(100);
+    #ifdef DEBUGMIO
+      DEBUG_PRINT("Temperatura: " + String(temp));
+    #endif
+  } while (temp == 85.0 || temp == (-127.0));
+  
+  
+  
+  //temp = roundf(temp * 100) / 100;
+  //#endif
   return temp;
 }
 void callback(char* topic, byte* payload, unsigned int length) {
