@@ -8,7 +8,7 @@
 #include <MedianFilter.h>
 #include <pin.h>
 MedianFilter mfPower(31, 0);
-const uint16_t versione =16;
+const uint16_t versione =18;
 //1= caldaia
 unsigned long caldaiaOnTime;
 uint16_t sampleData=0;

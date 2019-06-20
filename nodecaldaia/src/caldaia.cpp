@@ -112,7 +112,7 @@ void loop() {
   uint16_t currpower= analogRead(valvePin); //leggo la valvola del gas
   mfPower.in(currpower);
   currpower=mfPower.out();      //questo serve a non avere picchi
-  if((currpower > 50) && (mqtt_reconnect_tries==0)) //se il gas è aperto update della temperatura immediatamente
+  if((currpower > 15) && (mqtt_reconnect_tries==0)) //se il gas è aperto update della temperatura immediatamente
   {
     valori.acquaTemp = getTemperature();
     valori_da_inviare=1;
@@ -121,10 +121,13 @@ void loop() {
   sumPower+=currpower;          //somma col valore precedente
   sampleData++;
   if((millis() - wifi_reconnect_time) > wifi_check_time){
-    if(((millis() - caldaiaOnTime) > 300*1000UL) && (acquacalda.relayState()==1) && (getTemperature()<30)){
+
+    if(((millis() - caldaiaOnTime) > 300*1000UL) && (acquacalda.relayState()==0) && (getTemperature()<30)){
     //se dopo 5 minuti con la acqua abilitata la temperatura non è sopra i 30 ° C
     //non abbiamo bisogno di acqua calda
-    send(acquaTopic,0);
+    client.publish(teleTopic,"hOff");
+    client.loop();
+    send(acquaTopic,"0");
     }
     DEBUG_PRINT("Controllo WIFI");
     wifi_reconnect_time=millis();
