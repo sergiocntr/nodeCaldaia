@@ -1,6 +1,0 @@
-#ifndef cconfig_h
-#define cconfig_h
-const char* host = "*********************";
-const int httpPort = **;
-const char* webpass ="***************";
-#endif
